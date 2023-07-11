@@ -1,6 +1,9 @@
 
+import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:flutter_sio/data/models/product.dart';
+import 'package:flutter_sio/data/responses/get_product.dart';
 import 'package:http/http.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:http/http.dart' as http;
@@ -20,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   
   //Skip kelipatan 10 berdasarkan https://dummyjson.com/products
   int skip = 0;
+  List<Product> products = [];
 
   final RefreshController _refreshController =
       RefreshController(initialRefresh: true);
@@ -44,7 +48,16 @@ class _HomeScreenState extends State<HomeScreen> {
       Response response = await http.get(uri);
 
       if (response.statusCode == 200) {
-        log(response.body);
+        // convert to json
+        final responseJson = json.decode(response.body);
+
+        // convert to model
+        final result = GetProducts.fromJson(responseJson);
+
+        // update list
+        setState(() {
+          products = result.products;
+        });
 
         _refreshController.refreshCompleted();
       } else {
@@ -83,11 +96,12 @@ class _HomeScreenState extends State<HomeScreen> {
         controller: _refreshController,
         onRefresh: _onRefresh,
         onLoading: _onLoading,
-        child: ListView.builder(
-          itemCount: 10,
+        child: ListView.builder( 
+          itemCount: products.length,
           itemBuilder: (context, index) {
+            Product product = products[index];
             return ListTile(
-              title: Text('Item ke $index'),
+              title: Text('Item Name: ${product.title}'),
             );
           },
         ),
