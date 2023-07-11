@@ -28,6 +28,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+      body: ListView.builder(
+        itemCount: 10,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text('Item ke $index'),
+          );
+        },
+      ),
     );
   }
 }
