@@ -10,8 +10,24 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
+  final TextEditingController _inputSearch = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
-    return const Scaffold();
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 1,
+        backgroundColor: Colors.white,
+        title: TextFormField(
+          controller: _inputSearch,
+          textInputAction: TextInputAction.search,
+          decoration: const InputDecoration(
+            hintText: 'Cari Produk',
+            icon: Icon(Icons.search),
+          ),
+        ),
+      ),
+    );
   }
 }
