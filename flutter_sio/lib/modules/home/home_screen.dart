@@ -4,7 +4,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_sio/data/network/api_endpoint.dart';
 import 'package:flutter_sio/data/models/product.dart';
-import 'package:flutter_sio/data/responses/get_product.dart';
+import 'package:flutter_sio/data/responses/get_products.dart';
+import 'package:flutter_sio/modules/category/product_category_screen.dart';
 import 'package:flutter_sio/modules/home/widgets/product_card.dart';
 import 'package:http/http.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
@@ -25,10 +26,35 @@ class _HomeScreenState extends State<HomeScreen> {
   int skip = 0;
   String querySearch = '';
   List<Product> products = [];
+  List<String> categories = [];
 
   final RefreshController _refreshController =
       RefreshController(initialRefresh: true);
   final TextEditingController _inputSearch = TextEditingController();
+
+  void _getCategories() async {
+    try {
+      Uri uri = Uri.https(
+        ApiEndpoint.baseUrl,
+        ApiEndpoint.categories,
+      );
+
+      Response response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        // convert to json
+        final result =
+            List<String>.from(json.decode(response.body).map((x) => x));
+
+        // update list
+        setState(() {
+          categories = result;
+        });
+      }
+    } catch (e) {
+      log(e.toString(), name: 'ERROR FETCH DATA');
+    }
+  }
 
   void _onRefresh() async {
     skip = 0;
@@ -129,6 +155,22 @@ class _HomeScreenState extends State<HomeScreen> {
     _refreshController.loadComplete();
   }
 
+  _onTapCategory(BuildContext context, String category) {
+    if (context.mounted) {
+      Navigator.of(context).pushNamed(
+        ProductCategoryScreen.routeName,
+        arguments: {'category': category},
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _getCategories();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -145,13 +187,33 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: SmartRefresher(
-        enablePullUp: true,
-
-        controller: _refreshController,
-        onRefresh: _onRefresh,
-        onLoading: _onLoading,
-        child: GridView.builder(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: 50,
+            child: ListView.separated(
+              itemCount: categories.length,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemBuilder: (context, index) => GestureDetector(
+                onTap: () => _onTapCategory(context, categories[index]),
+                child: Chip(
+                  padding: const EdgeInsets.all(0),
+                  visualDensity: VisualDensity.compact,
+                  label: Text(categories[index]),
+                ),
+              ),
+              separatorBuilder: (context, index) => const SizedBox(width: 8),
+            ),
+          ),
+          Expanded(
+            child: SmartRefresher(
+              enablePullUp: true,
+              controller: _refreshController,
+              onRefresh: _onRefresh,
+              onLoading: _onLoading,
+              child: GridView.builder(
                 itemCount: products.length,
                 padding: const EdgeInsets.all(12),
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -174,6 +236,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
+            ),
+          ),
+        ],
       ),
     );
   }
