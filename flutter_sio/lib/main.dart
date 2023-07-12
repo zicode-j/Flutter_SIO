@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_sio/modules/category/product_category_screen.dart';
 import 'package:flutter_sio/modules/home/home_screen.dart';
 import 'package:flutter_sio/modules/splash/splash_screen.dart';
 
@@ -37,6 +38,8 @@ class MyApp extends StatelessWidget {
       routes: {
         SplashScreen.routeName: (context) => const SplashScreen(),
         HomeScreen.routeName: (context) => const HomeScreen(),
+        ProductCategoryScreen.routeName: (context) =>
+            const ProductCategoryScreen(),
       },
     );
   }
