@@ -73,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onLoading() async {
-    skip += 0;
+    skip += 10;
 
     Map<String, String> queryParameters = {
       'q': '',
@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
         } else {
           // update list
           setState(() {
-            products = result.products;
+            products.addAll(result.products);
           });
 
           _refreshController.loadComplete();
