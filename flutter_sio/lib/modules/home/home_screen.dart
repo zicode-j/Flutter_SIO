@@ -2,13 +2,13 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:flutter_sio/data/network/api_endpoint.dart';
 import 'package:flutter_sio/data/models/product.dart';
 import 'package:flutter_sio/data/responses/get_product.dart';
+import 'package:flutter_sio/modules/home/widgets/product_card.dart';
 import 'package:http/http.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:http/http.dart' as http;
-
-import '../../data/network/api_endpoint.dart';
 
 class HomeScreen extends StatefulWidget {
   static const routeName = '/home-screen';
@@ -23,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   
   //Skip kelipatan 10 berdasarkan https://dummyjson.com/products
   int skip = 0;
+  String querySearch = '';
   List<Product> products = [];
 
   final RefreshController _refreshController =
@@ -33,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
     skip = 0;
 
     Map<String, String> queryParameters = {
-      'q': '',
+      'q': querySearch,
       'limit': '10',
       'skip': skip.toString(),
     };
@@ -76,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
     skip += 10;
 
     Map<String, String> queryParameters = {
-      'q': '',
+      'q': querySearch,
       'limit': '10',
       'skip': skip.toString(),
     };
@@ -112,13 +113,20 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         log(response.body);
 
-        _refreshController.refreshFailed();
+        _refreshController.loadFailed();
       }
     } catch (e) {
       log(e.toString(), name: 'ERROR FETCH DATA');
 
-      _refreshController.refreshFailed();
+      _refreshController.loadFailed();
     }
+  }
+
+  void _onSearch(String value) async {
+    querySearch = value;
+
+    await _refreshController.requestRefresh();
+    _refreshController.loadComplete();
   }
 
   @override
@@ -130,6 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: TextFormField(
           controller: _inputSearch,
           textInputAction: TextInputAction.search,
+          onFieldSubmitted: _onSearch,
           decoration: const InputDecoration(
             hintText: 'Cari Produk',
             icon: Icon(Icons.search),
@@ -142,18 +151,30 @@ class _HomeScreenState extends State<HomeScreen> {
         controller: _refreshController,
         onRefresh: _onRefresh,
         onLoading: _onLoading,
-        child: ListView.builder( 
-          itemCount: products.length,
-          itemBuilder: (context, index) {
-            Product product = products[index];
-            return ListTile(
-              title: Text('Item Name: ${product.title}'),
-            );
-          },
-        ),
+        child: GridView.builder(
+                itemCount: products.length,
+                padding: const EdgeInsets.all(12),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 200,
+                  childAspectRatio: 3 / 4,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemBuilder: (context, index) {
+                  Product product = products[index];
+
+                  return ProductCard(
+                    title: product.title,
+                    price: product.price,
+                    rating: product.rating,
+                    discountPercentage: product.discountPercentage,
+                    stock: product.stock,
+                    brand: product.brand,
+                    thumbnail: product.thumbnail,
+                  );
+                },
+              ),
       ),
     );
   }
-
-  
 }
